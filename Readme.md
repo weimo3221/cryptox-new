@@ -89,7 +89,7 @@ python -m data_construct.data_noise -r emoji_shuffle -n "5 10" --encode_type "nu
 ```linux
 python -m data_construct.data_transform -r emoji_shuffle -n "5 10" --encode_type "nums"
 ```
-2. Cryptography Rule (Data encoding scheme requirements, including: rsa, md5, caesar and des):
+3. Cryptography Rule (Data encoding scheme requirements, including: rsa, md5, caesar and des):
 ```linux
 python -m data_construct.data_cyber_encode -r rsa -n "5 10" --encode_type "nums"
 ```
