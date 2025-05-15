@@ -103,16 +103,19 @@ python -m eval.set_judge_model -m "deepseek-chat" -a "https://api.deepseek.com" 
 
 ### Evaluate Your Model
 1. Evaluate a specific file
+
 Use the model name (-m), model API address (-a), and API key (-k) to evaluate a specific file:
 ```linux
 python -m eval.eval -i "eval/test_file/test.jsonl" -m "deepseek-chat" -a "https://api.deepseek.com" -k "API-KEY"
 ```
-2. Recursively evaluate all files in a folder
+1. Recursively evaluate all files in a folder
+
 Use the -r flag to recursively evaluate all files within a folder:
 ```linux
 python -m eval.eval -r -i "eval/test_file" -m "deepseek-chat" -a "https://api.deepseek.com" -k "API-KEY"
 ```
-3. Specify an output folder
+1. Specify an output folder
+
 You can specify an output folder for the results using the -o flag:
 ```linux
 python -m eval.eval -r -i "eval/test_file" -o "eval/result_data" -m "deepseek-chat" -a "https://api.deepseek.com" -k "API-KEY"
