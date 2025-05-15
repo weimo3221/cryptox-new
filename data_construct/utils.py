@@ -12,6 +12,7 @@ import numpy as np
 
 # Libraries for projects
 from .prompt_create import prompt_mmlu, prompt_bbh, prompt_math, prompt_mbpp, prompt_needle
+from .lib.encode_lib import cyber_rule
 
 # Configuring logging, setting the logging level and output format
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -104,7 +105,7 @@ def check_domain(domain, p_type):
         logging.error(f"A domain that doesn't exist: {domain}")
         sys.exit(1)
     elif domain == "all":
-        if p_type == "decode" or p_type == "base" or p_type == "transform" or p_type == "noise":
+        if p_type == "decode" or p_type == "base" or p_type == "transform" or p_type == "noise" or p_type == "cyber" or p_type == "multi":
             domain = ["math", "bbh", "mbpp", "mmlu"]
             logging.info(f"Domain: {domain}")
             return domain
@@ -131,6 +132,12 @@ def check_domain(domain, p_type):
             sys.exit(1)
         elif p_type == "noise" and domain not in ["math", "bbh", "mbpp", "mmlu"]:
             logging.error(f"Domain is not allowed in noise mode: {domain}")
+            sys.exit(1)
+        elif p_type == "cyber" and domain not in ["math", "bbh", "mbpp", "mmlu"]:
+            logging.error(f"Domain is not allowed in noise mode: {domain}")
+            sys.exit(1)
+        elif p_type == "multi" and domain not in ["math", "bbh", "mbpp", "mmlu"]:
+            logging.error(f"Domain is not allowed in multi encode mode: {domain}")
             sys.exit(1)
         logging.info(f"Domain: {domain}")
         return [str(domain)]
@@ -209,19 +216,19 @@ def get_prompt(dataset_type, code_if, dic, p_type):
     
 def parse_init_data_encode():
     """
-    定义并解析data_encode代码的命令行参数，配置日志记录，并检查输入的编码的数据文件目录和输出的目录是否存在。
+    Defines and parses command-line arguments for the data encoding code, configures logging, and validates the existence of both the input encoded data file directory and the output directory
     """
     parser = argparse.ArgumentParser(description="Data creation utility")
 
     # Adding command line parameters
-    parser.add_argument('-r', '--rule', type=str, required=True, default="morse_base", help='对数据编码的模式要求,包含morse_base, emoji_morse, emoji_shuffle')
-    parser.add_argument('-i', '--input', type=str, default="data_construct/ori_data/ori_data_for_encode", help='要进行编码的数据文件的目录地址')
-    parser.add_argument('-o', '--output', type=str, default="data_construct/crypto_data", help='编码的数据文件输出的地址')
-    parser.add_argument('-p', '--percentages', type=str, default="0 3 1", help='编码的比例，用空格键隔开，第一个是开始的比例，第二个是需要切分成多少个，第三个是结束的比例')
-    parser.add_argument('-d', '--domain', type=str, default="all", help='选择的数据类型，从已有的种类中挑选，包含math、bbh、mbpp、mmlu、needle、subset')
-    parser.add_argument('-t', '--type', type=str, default="simple", help='选择的prompt的类型，支持simple、base、decode、multi-rounds')
-    parser.add_argument('-n', '--nums', type=str, default="0 3 5 10", help='编码的words个数，用list表示，一旦设置')
-    parser.add_argument('--encode_type', type=str, default="percentages", help='选择编码单词的类型，是按照个数来编码还是按照比例来编码，有两种编码方式：percentages和nums')
+    parser.add_argument('-r', '--rule', type=str, required=True, default="morse_base", help='Data encoding scheme requirements, including: morse_base, emoji_morse, emoji_shuffle')
+    parser.add_argument('-i', '--input', type=str, default="data_construct/ori_data/ori_data_for_encode", help='Directory path of the data files to be encoded')
+    parser.add_argument('-o', '--output', type=str, default="data_construct/crypto_data", help='Output path for the encoded data file')
+    parser.add_argument('-p', '--percentages', type=str, default="0 3 1", help='Specify the encoding ratios, separated by spaces: the starting ratio, the number of segments to divide into, and the ending ratio')
+    parser.add_argument('-d', '--domain', type=str, default="all", help='Selecting the appropriate data type from a pre-defined set of options: math、bbh、mbpp、mmlu、needle、subset')
+    parser.add_argument('-t', '--type', type=str, default="simple", help='Type of prompt selected: simple、base、decode、multi-rounds')
+    parser.add_argument('-n', '--nums', type=str, default="0 5 10", help='The number of encoded words, represented as a list, is fixed once set')
+    parser.add_argument('--encode_type', type=str, default="nums", help='Choose the method for encoding words: either by frequency (percentages) or by count (nums)')
 
     # Parsing command line parameters
     args = parser.parse_args()
@@ -253,6 +260,7 @@ def parse_init_data_encode():
 
     return args
 
+
 def parse_init_data_transform():
     """
     Defines and parses command-line arguments for the data encoding code, configures logging, and validates the existence of both the input encoded data file directory and the output directory
@@ -283,7 +291,7 @@ def parse_init_data_transform():
         logging.error(f"Input directory is not exists: {os.path.abspath(args.input)}")
         sys.exit(1)
 
-    args.output = os.path.join(args.output, args.rule)
+    args.output = os.path.join(args.output, args.rule + "_transform")
     if check_directory(args.output, "o"):
         logging.info(f"Output directory: {os.path.abspath(args.output)}")
 
@@ -329,7 +337,7 @@ def parse_init_data_noise():
         logging.error(f"Input directory is not exists: {os.path.abspath(args.input)}")
         sys.exit(1)
 
-    args.output = os.path.join(args.output, args.rule)
+    args.output = os.path.join(args.output, args.rule + "_noise")
     if check_directory(args.output, "o"):
         logging.info(f"Output directory: {os.path.abspath(args.output)}")
 
@@ -344,5 +352,99 @@ def parse_init_data_noise():
     elif args.encode_type == "percentages":
         args.percentages = check_percentages(args.percentages)
     args.domain = check_domain(args.domain, "noise")
+
+    return args
+
+
+def parse_init_data_cyber_encode():
+    """
+    Defines and parses command-line arguments for the data encoding code, configures logging, and validates the existence of both the input encoded data file directory and the output directory
+    """
+    parser = argparse.ArgumentParser(description="Data creation utility")
+
+    # Adding command line parameters
+    parser.add_argument('-r', '--rule', type=str, required=True, default="rsa", help='Data encoding scheme requirements, including: rsa, md5, caesar and des')
+    parser.add_argument('-i', '--input', type=str, default="data_construct/ori_data/ori_data_for_transform", help='Directory path of the data files to be encoded')
+    parser.add_argument('-o', '--output', type=str, default="data_construct/crypto_data", help='Output path for the encoded data file')
+    parser.add_argument('-p', '--percentages', type=str, default="0 3 1", help='Specify the encoding ratios, separated by spaces: the starting ratio, the number of segments to divide into, and the ending ratio')
+    parser.add_argument('-d', '--domain', type=str, default="all", help='Selecting the appropriate data type from a pre-defined set of options: math、bbh、mbpp、mmlu、needle、subset')
+    parser.add_argument('-n', '--nums', type=str, default="5 10", help='The number of encoded words, represented as a list, is fixed once set')
+    parser.add_argument('--encode_type', type=str, default="nums", help='Choose the method for encoding words: either by frequency (percentages) or by count (nums)')
+
+    # Parsing command line parameters
+    args = parser.parse_args()
+
+    if args.rule in cyber_rule.keys():
+        logging.info(f'Using rule: {args.rule}')
+    else:
+        logging.error(f"Rule is not exists in cyber_rule: {args.rule}")
+        sys.exit(1)
+
+    if check_directory(args.input, "i"):
+        logging.info(f"Input directory: {os.path.abspath(args.input)}")
+    else:
+        logging.error(f"Input directory is not exists: {os.path.abspath(args.input)}")
+        sys.exit(1)
+
+    args.output = os.path.join(args.output, args.rule)
+    if check_directory(args.output, "o"):
+        logging.info(f"Output directory: {os.path.abspath(args.output)}")
+
+    check_encode_type(args.encode_type)
+    
+    if args.encode_type == "nums":
+        args.nums = check_nums(args.nums)
+    elif args.encode_type == "percentages":
+        args.percentages = check_percentages(args.percentages)
+    args.domain = check_domain(args.domain, "cyber")
+
+    return args
+
+def parse_init_data_encode_multi():
+    """
+    Defines and parses command-line arguments for the data encoding code, configures logging, and validates the existence of both the input encoded data file directory and the output directory
+    """
+    parser = argparse.ArgumentParser(description="Data creation utility")
+
+    # Adding command line parameters
+    parser.add_argument('-r', '--rule', type=str, required=True, default="morse_base", help='Data encoding scheme requirements, including: morse_base, emoji_morse, emoji_shuffle')
+    parser.add_argument('-i', '--input', type=str, default="data_construct/ori_data/ori_data_for_multi_composition", help='Directory path of the data files to be encoded')
+    parser.add_argument('-o', '--output', type=str, default="data_construct/crypto_data", help='Output path for the encoded data file')
+    parser.add_argument('-p', '--percentages', type=str, default="0 3 1", help='Specify the encoding ratios, separated by spaces: the starting ratio, the number of segments to divide into, and the ending ratio')
+    parser.add_argument('-d', '--domain', type=str, default="all", help='Selecting the appropriate data type from a pre-defined set of options: math、bbh、mbpp、mmlu、needle、subset')
+    parser.add_argument('-n', '--nums', type=str, default="5 10", help='The number of encoded words, represented as a list, is fixed once set')
+    parser.add_argument('-c', '--combination', type=int, default=1, help='The number of subtasks in the combination, ordered by noise, des, and transform.')
+    parser.add_argument('--encode_type', type=str, default="nums", help='Choose the method for encoding words: either by frequency (percentages) or by count (nums)')
+
+    # Parsing command line parameters
+    args = parser.parse_args()
+
+    if check_rule(args.rule):
+        logging.info(f'Using rule: {args.rule}')
+    else:
+        logging.error(f"Rule is not exists in rules.json: {args.rule}")
+        sys.exit(1)
+
+    if check_directory(args.input, "i"):
+        logging.info(f"Input directory: {os.path.abspath(args.input)}")
+    else:
+        logging.error(f"Input directory is not exists: {os.path.abspath(args.input)}")
+        sys.exit(1)
+
+    args.output = os.path.join(args.output, args.rule + f"_combination_{args.combination}")
+    if check_directory(args.output, "o"):
+        logging.info(f"Output directory: {os.path.abspath(args.output)}")
+
+    check_encode_type(args.encode_type)
+
+    if args.combination not in [1, 2, 3]:
+        logging.error(f"Combination is not exists: {args.combination}")
+        sys.exit(1)
+    
+    if args.encode_type == "nums":
+        args.nums = check_nums(args.nums)
+    elif args.encode_type == "percentages":
+        args.percentages = check_percentages(args.percentages)
+    args.domain = check_domain(args.domain, "multi")
 
     return args

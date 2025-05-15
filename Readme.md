@@ -79,6 +79,20 @@ python -m data_construct.special_encode.needle_data_encode -r morse_base -p "0 3
 
 **To add a new dataset, please construct it according to the datasets in data_construct/ori_data.**
 
+### Dataset Transforming
+Several transformation rules are now available, including Noisy Rule, Difficult Transformation Rule, and Cryptography Rule. The following outlines how to use the corresponding datasets constructed with each method:
+1. Noisy Rule:
+```linux
+python -m data_construct.data_noise -r emoji_shuffle -n "5 10" --encode_type "nums"
+```
+2. Difficult Transformation Rule:
+```linux
+python -m data_construct.data_transform -r emoji_shuffle -n "5 10" --encode_type "nums"
+```
+2. Cryptography Rule (Data encoding scheme requirements, including: rsa, md5, caesar and des):
+```linux
+python -m data_construct.data_cyber_encode -r rsa -n "5 10" --encode_type "nums"
+```
 
 ## 🗒️ Eval
 

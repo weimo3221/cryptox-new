@@ -10,7 +10,7 @@ from tqdm import tqdm
 
 # Libraries for projects
 from .utils import parse_init_data_transform, get_rule
-from .lib.transform_lib import sample_idx, word_trnsform
+from .lib.transform_lib import sample_idx, word_transform
 from .prompt_create.prompt_transform_all import transform_template, transform_template_math, transform_template_mbpp
 
 
@@ -22,6 +22,7 @@ def one_file_transform(file, df, math_rule, rule, percentage, output_dir_path, e
     """
     Transforming a dataset by percentage
     """
+    fout = os.path.join(output_dir_path, f"{file.replace('.jsonl', '')}_percentage_{percentage}.jsonl")
     if math.isclose(percentage, 0, rel_tol=1e-9):
         logging.info(f"0 percentage is not supported, skipping {file.replace('.jsonl', '')}_percentage_{percentage}.jsonl......")
         return
@@ -42,7 +43,7 @@ def one_file_transform(file, df, math_rule, rule, percentage, output_dir_path, e
             if j in crypto_idx:
                 sample_word.append(words[j])
                 # print(f"words: {words[j]}")
-                words[j] = word_trnsform(words[j], rule_chosen["rule"])
+                words[j] = word_transform(words[j], rule_chosen["rule"])
                 crypto_word.append(words[j])
         
         crypto_question =' '.join(words)
@@ -55,6 +56,7 @@ def one_file_transform(file, df, math_rule, rule, percentage, output_dir_path, e
         item['crypto_word'] = crypto_word
         item['sample_word'] = sample_word
         item["crypto_id"] = f'crypto_{str(idx)}'
+        item["tag"] = item["tag"] = os.path.basename(fout)
 
         if item.get("dataset_type", "no_type") == "math_500":
             item["prompt"] = [{"content": transform_template_math.format(**item).strip(), "role": "user"}]
@@ -65,7 +67,6 @@ def one_file_transform(file, df, math_rule, rule, percentage, output_dir_path, e
 
         data.append(item)
     df = pd.DataFrame(data)
-    fout = os.path.join(output_dir_path, f"{file.replace('.jsonl', '')}_percentage_{percentage}.jsonl")
     df.to_json(fout, orient='records', lines=True, force_ascii=False)
     
 

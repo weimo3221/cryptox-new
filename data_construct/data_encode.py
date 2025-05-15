@@ -22,6 +22,7 @@ def one_file_encode(file, df, math_rule, rule, percentage, output_dir_path, p_ty
     """
     Encoding a dataset by percentage
     """
+    fout = os.path.join(output_dir_path, f"{file.replace('.jsonl', '')}_percentage_{percentage}.jsonl")
     data = []
     for idx, item in df.iterrows():
         item = item.to_dict()
@@ -52,6 +53,7 @@ def one_file_encode(file, df, math_rule, rule, percentage, output_dir_path, p_ty
         item['crypto_word'] = crypto_word
         item['sample_word'] = sample_word
         item["crypto_id"] = f'crypto_{str(idx)}'
+        item["tag"] = os.path.basename(fout)
 
         if p_type != "multi-rounds":
             if math.isclose(percentage, 0, rel_tol=1e-9):
@@ -73,7 +75,6 @@ def one_file_encode(file, df, math_rule, rule, percentage, output_dir_path, p_ty
 
         data.append(item)
     df = pd.DataFrame(data)
-    fout = os.path.join(output_dir_path, f"{file.replace('.jsonl', '')}_percentage_{percentage}.jsonl")
     df.to_json(fout, orient='records', lines=True, force_ascii=False)
     
 

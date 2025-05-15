@@ -1,6 +1,7 @@
 # eval/metric_lib/metric_mbpp.py
 # Python Standard Library
 import multiprocessing
+import re
 
 
 async def multichoice_openai(response, test):
@@ -18,17 +19,36 @@ async def multichoice_openai(response, test):
 
 def extract_code(text):
     """
-    The asynchronous request makes a judgment about whether the code block can be executed correctly test
+    Extract the last function block from the response, starting with "def" and ending with "return," while disregarding any "return" statements found within comments.
     """
-    start = text.rfind("def ")
-    if start == -1:
+    # 1.  First, prioritize searching within Markdown code blocks.
+    code_blocks = re.findall(r"```(?:python)?\s*([\s\S]*?)```", text, re.IGNORECASE)
+    if code_blocks:
+        text = code_blocks[-1].strip()
+    
+    # 2. Locate the last `def` function.
+    matches = list(re.finditer(r"def\s+\w+\s*\(.*?\):", text, re.MULTILINE))
+    if not matches:
         return ""
-    end = text[start: ].find("return")
-    end2 = text[start+end: ].find("\n")
-    if end2 == -1:
-        end2 = len(text[start+end: ])
-    re = text[start: start + end + end2]
-    return re
+    
+    start = matches[-1].start()
+    func_text = text[start:]
+    
+    # 3. Locate the final, non-commented return statement.
+    lines = func_text.split('\n')
+    return_line = -1
+    for i, line in enumerate(lines):
+        stripped = line.strip()
+        if stripped.startswith('return '):
+            return_line = i
+        elif stripped.startswith('#'):
+            continue
+    
+    if return_line == -1:
+        return func_text.strip()
+    
+    # 4.  Extract the code block starting with "def" and ending with the final "return" statement.
+    return '\n'.join(lines[:return_line + 1]).strip()
 
 
 def run_tests(code, test_cases, timeout=3):

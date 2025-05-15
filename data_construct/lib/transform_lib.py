@@ -94,7 +94,7 @@ def Transform_8(word, dic):
     # Convert letters into their corresponding emoji strings
     return "|".join([char2emoji(c.lower(), dic) for c in word])
 
-def word_trnsform(word, dic):
+def word_transform(word, dic):
     """
     Transform the word using a dictionary of transformations
     """
@@ -127,5 +127,5 @@ if __name__ == "__main__":
                 "Y": "🐥🍇🎨", "Z": "🌵🍒🎮", "0": "🦁🍄🎈", "1": "🐘🌸🎨", "2": "🦊🍉🌟",
                 "3": "🦋🍇🎵", "4": "🦄🍓🎲", "5": "🐼🍍🎯", "6": "🦉🍌🎤", "7": "🦇🍒🎧",
                 "8": "🦄🍂🎥", "9": "🦍🍁🎮"}
-    transformed_word = word_trnsform(word, dic)
+    transformed_word = word_transform(word, dic)
     print(transformed_word)

@@ -54,6 +54,7 @@ def judge_correctness_math500(problem, real_answer, generated_answer):
     if pos == -1:
         return False
     generated_answer = generated_answer[pos:]
+    generated_answer = generated_answer.replace("answer is", "Answer:")
     ANSWER_PATTERN_MULTICHOICE = r"(?i)Answer\s*:\s*(.*)"
     match_for_generated_answer = re.findall(ANSWER_PATTERN_MULTICHOICE, generated_answer)
     if match_for_generated_answer:

@@ -22,6 +22,7 @@ def one_file_noise(file, df, math_rule, rule, percentage, output_dir_path, encod
     """
     Adding noise by percentage
     """
+    fout = os.path.join(output_dir_path, f"{file.replace('.jsonl', '')}_percentage_{percentage}.jsonl")
     if math.isclose(percentage, 0, rel_tol=1e-9):
         logging.info(f"0 percentage is not supported, skipping {file.replace('.jsonl', '')}_percentage_{percentage}.jsonl......")
         return
@@ -55,6 +56,7 @@ def one_file_noise(file, df, math_rule, rule, percentage, output_dir_path, encod
         item['crypto_word'] = crypto_word
         item['sample_word'] = sample_word
         item["crypto_id"] = f'crypto_{str(idx)}'
+        item["tag"] = item["tag"] = os.path.basename(fout)
 
         if noise_type == 0:
             item["noise_rule"] = "- Words with added noise will have random letters inserted at odd-numbered positions. For example, 'happy' becomes 'hiapjpyk'"
@@ -70,7 +72,6 @@ def one_file_noise(file, df, math_rule, rule, percentage, output_dir_path, encod
 
         data.append(item)
     df = pd.DataFrame(data)
-    fout = os.path.join(output_dir_path, f"{file.replace('.jsonl', '')}_percentage_{percentage}.jsonl")
     df.to_json(fout, orient='records', lines=True, force_ascii=False)
     
 

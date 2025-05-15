@@ -76,6 +76,10 @@ def Transform_2(word, dic):
     return "|".join([char2emoji(c.lower(), dic) for c in word])
 
 
+def word_add_only_noise(word, type):
+    return Transform_1(word, type)
+
+
 def word_add_noise(word, dic, type):
     """
     Transform the word using a dictionary of transformations
